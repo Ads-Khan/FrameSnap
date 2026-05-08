@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>FrameSnap</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="wordmark">
+        <svg
+          class="wordmark-icon"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+        </svg>
+        <span class="wordmark-text">FrameSnap</span>
+      </div>
+      <button
+        class="icon-btn"
+        id="info-btn"
+        type="button"
+        title="About FrameSnap"
+        aria-label="About FrameSnap"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </button>
+    </header>
+
+    <div
+      class="segmented"
+      role="tablist"
+      aria-label="Resize target"
+    >
+      <span class="segmented-pill" aria-hidden="true"></span>
+      <button
+        class="segmented-option"
+        role="tab"
+        type="button"
+        data-mode="window"
+        aria-selected="true"
+      >
+        Window
+      </button>
+      <button
+        class="segmented-option"
+        role="tab"
+        type="button"
+        data-mode="viewport"
+        aria-selected="false"
+      >
+        Viewport
+      </button>
+    </div>
+
+    <main class="content" id="content">
+      <section class="preset-group" data-group="landscape">
+        <h2 class="group-label">Landscape · 16:9</h2>
+        <div class="preset-grid" data-grid="landscape"></div>
+      </section>
+
+      <section class="preset-group" data-group="portrait">
+        <h2 class="group-label">Portrait · 9:16</h2>
+        <div class="preset-grid" data-grid="portrait"></div>
+      </section>
+
+      <section class="preset-group" data-group="standard">
+        <h2 class="group-label">Standard · 4:3</h2>
+        <div class="preset-grid" data-grid="standard"></div>
+      </section>
+
+      <section class="preset-group" data-group="square">
+        <h2 class="group-label">Square · 1:1</h2>
+        <div class="preset-grid" data-grid="square"></div>
+      </section>
+
+      <section class="preset-group" data-group="mobile">
+        <h2 class="group-label">Mobile</h2>
+        <div class="preset-grid" data-grid="mobile"></div>
+      </section>
+
+      <section class="preset-group">
+        <h2 class="group-label">Custom</h2>
+        <form class="custom-form" id="custom-form" novalidate>
+          <div class="custom-inputs">
+            <label class="dim-input">
+              <span class="dim-input-label">W</span>
+              <input
+                type="number"
+                id="custom-width"
+                inputmode="numeric"
+                min="1"
+                max="8000"
+                step="1"
+                placeholder="1920"
+                autocomplete="off"
+                required
+              />
+            </label>
+            <span class="dim-x" aria-hidden="true">×</span>
+            <label class="dim-input">
+              <span class="dim-input-label">H</span>
+              <input
+                type="number"
+                id="custom-height"
+                inputmode="numeric"
+                min="1"
+                max="8000"
+                step="1"
+                placeholder="1080"
+                autocomplete="off"
+                required
+              />
+            </label>
+            <button class="btn-primary" id="custom-apply" type="submit">
+              Apply
+            </button>
+          </div>
+          <div class="custom-meta">
+            <button class="link-btn" id="save-preset" type="button">
+              Save preset
+            </button>
+            <span class="custom-error" id="custom-error" role="alert"></span>
+          </div>
+        </form>
+      </section>
+
+      <section
+        class="preset-group"
+        id="saved-group"
+        data-group="saved"
+        hidden
+      >
+        <h2 class="group-label">Saved</h2>
+        <div class="preset-grid" data-grid="saved"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <button class="btn-secondary" id="center-btn" type="button">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+          <circle cx="12" cy="12" r="2"></circle>
+        </svg>
+        <span>Center window</span>
+      </button>
+      <p class="dpi-note">Dimensions are in CSS pixels.</p>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- Save-preset name dialog -->
+    <div class="modal" id="save-modal" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
+        <h3 class="modal-title" id="save-modal-title">Save preset</h3>
+        <p class="modal-desc" id="save-modal-desc"></p>
+        <input
+          type="text"
+          id="save-name"
+          class="modal-input"
+          placeholder="Preset name"
+          maxlength="40"
+          autocomplete="off"
+        />
+        <div class="modal-actions">
+          <button class="btn-ghost" type="button" id="save-cancel">Cancel</button>
+          <button class="btn-primary" type="button" id="save-confirm">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
