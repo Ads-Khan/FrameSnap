@@ -75,6 +75,19 @@
       </button>
     </div>
 
+    <div class="status-row">
+      <span class="status-label">Current</span>
+      <span class="status-current" id="current-dims" data-empty="true">—</span>
+      <button
+        class="link-btn status-action"
+        id="capture-btn"
+        type="button"
+        title="Fill custom inputs with the current window size"
+      >
+        Use current
+      </button>
+    </div>
+
     <main class="content" id="content">
       <section class="preset-group" data-group="landscape">
         <h2 class="group-label">Landscape · 16:9</h2>
@@ -186,6 +199,7 @@
       <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
         <h3 class="modal-title" id="save-modal-title">Save preset</h3>
         <p class="modal-desc" id="save-modal-desc"></p>
+        <p class="modal-note" id="save-modal-note" hidden></p>
         <input
           type="text"
           id="save-name"

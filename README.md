@@ -5,6 +5,10 @@ dimensions. Built for web testing, screenshots, and video recording.
 
 Click the toolbar icon → click a preset → window resizes instantly.
 
+<p align="center">
+  <img src="docs/screenshot.png" alt="FrameSnap popup — Viewport mode, 1920×1080 highlighted as active" width="320" />
+</p>
+
 ## Features
 
 - **Window vs Viewport mode** — resize the outer window, or resize so the

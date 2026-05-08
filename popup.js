@@ -72,7 +72,10 @@
     saveName: $("#save-name"),
     saveCancel: $("#save-cancel"),
     saveConfirm: $("#save-confirm"),
+    saveModalNote: $("#save-modal-note"),
     infoBtn: $("#info-btn"),
+    currentDims: $("#current-dims"),
+    captureBtn: $("#capture-btn"),
   };
 
   // ---------------------------------------------------------------------------
@@ -83,6 +86,9 @@
     mode: "window",
     saved: [],
     pendingSave: null, // {w, h}
+    // Live measurements of the active window. `outer` is what `chrome.windows`
+    // sees; `inner` is the page viewport (read via scripting).
+    current: { outer: null, inner: null },
   };
 
   // ---------------------------------------------------------------------------
@@ -279,6 +285,9 @@
     } else {
       showToast(`Resized to ${labelW}×${labelH}`);
     }
+
+    // Refresh the live measurement strip and the active-preset highlight.
+    refreshCurrent();
   }
 
   async function centerWindow() {
@@ -344,6 +353,8 @@
     const card = document.createElement("button");
     card.type = "button";
     card.className = "preset-card";
+    card.dataset.w = String(preset.w);
+    card.dataset.h = String(preset.h);
     card.appendChild(buildShape(preset.w, preset.h));
 
     const text = document.createElement("span");
@@ -415,6 +426,152 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Live window measurements + active-preset highlight
+  // ---------------------------------------------------------------------------
+
+  // Reads both outer (window) and inner (viewport) dimensions from the active
+  // tab. Updates the chromeOffset cache as a side effect so resizeTo() benefits
+  // even when the user is currently on a non-injectable page.
+  async function getCurrentDims() {
+    const tab = await getActiveTab();
+    if (!tab || tab.windowId == null) return { outer: null, inner: null };
+
+    let outer = null;
+    try {
+      const win = await getWindow(tab.windowId);
+      outer = { w: Math.round(win.width), h: Math.round(win.height) };
+    } catch (_e) {
+      // No accessible window — leave outer null.
+    }
+
+    let inner = null;
+    if (tab.id != null) {
+      try {
+        const results = await new Promise((resolve, reject) => {
+          chrome.scripting.executeScript(
+            {
+              target: { tabId: tab.id },
+              func: () => ({
+                outerW: window.outerWidth,
+                outerH: window.outerHeight,
+                innerW: window.innerWidth,
+                innerH: window.innerHeight,
+              }),
+            },
+            (out) => {
+              if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError.message));
+                return;
+              }
+              resolve(out);
+            }
+          );
+        });
+        const r = results && results[0] && results[0].result;
+        if (r && Number.isFinite(r.innerW) && Number.isFinite(r.innerH)) {
+          inner = { w: Math.round(r.innerW), h: Math.round(r.innerH) };
+          // Refresh the offset cache for free — accuracy here matters because
+          // DevTools toggles change innerHeight without changing outerHeight.
+          if (Number.isFinite(r.outerW) && Number.isFinite(r.outerH)) {
+            const offset = {
+              x: Math.max(MIN_CHROME_DELTA_X, Math.round(r.outerW - r.innerW)),
+              y: Math.max(MIN_CHROME_DELTA_Y, Math.round(r.outerH - r.innerH)),
+            };
+            storageSet({ [STORAGE_KEYS.chromeOffset]: offset });
+          }
+        }
+      } catch (_e) {
+        // Inaccessible tab — fall through to derive from cached offset.
+      }
+    }
+
+    if (!inner && outer) {
+      const cached = await storageGet(STORAGE_KEYS.chromeOffset);
+      const off = cached[STORAGE_KEYS.chromeOffset] || FALLBACK_OFFSET;
+      inner = {
+        w: Math.max(0, outer.w - off.x),
+        h: Math.max(0, outer.h - off.y),
+      };
+    }
+
+    return { outer, inner };
+  }
+
+  async function refreshCurrent() {
+    state.current = await getCurrentDims();
+    renderCurrent();
+    renderActiveHighlight();
+  }
+
+  function currentDimsForMode() {
+    return state.mode === "viewport" ? state.current.inner : state.current.outer;
+  }
+
+  function renderCurrent() {
+    const dims = currentDimsForMode();
+    if (dims && Number.isFinite(dims.w) && Number.isFinite(dims.h)) {
+      els.currentDims.textContent = `${dims.w} × ${dims.h}`;
+      els.currentDims.removeAttribute("data-empty");
+    } else {
+      els.currentDims.textContent = "—";
+      els.currentDims.setAttribute("data-empty", "true");
+    }
+  }
+
+  function renderActiveHighlight() {
+    const dims = currentDimsForMode();
+    document.querySelectorAll(".preset-card").forEach((card) => {
+      const w = Number(card.dataset.w);
+      const h = Number(card.dataset.h);
+      const match =
+        !!dims &&
+        Number.isFinite(w) &&
+        Number.isFinite(h) &&
+        w === dims.w &&
+        h === dims.h;
+      card.classList.toggle("is-active", match);
+      if (match) {
+        card.setAttribute("aria-current", "true");
+      } else {
+        card.removeAttribute("aria-current");
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Duplicate-preset detection (for the save modal)
+  // ---------------------------------------------------------------------------
+
+  const GROUP_LABELS = {
+    landscape: "Landscape",
+    portrait: "Portrait",
+    standard: "Standard",
+    square: "Square",
+    mobile: "Mobile",
+  };
+
+  // Returns a human-readable description of an existing preset that matches
+  // (w, h), or null if none exists.
+  function findMatchingPreset(w, h) {
+    for (const group of Object.keys(BUILTIN)) {
+      for (const p of BUILTIN[group]) {
+        if (p.w === w && p.h === h) {
+          const groupLabel = GROUP_LABELS[group] || group;
+          return p.label
+            ? `${groupLabel} · ${p.label}`
+            : `${groupLabel} · ${p.w}×${p.h}`;
+        }
+      }
+    }
+    for (const p of state.saved) {
+      if (p.w === w && p.h === h) {
+        return `Saved · "${p.name}"`;
+      }
+    }
+    return null;
+  }
+
+  // ---------------------------------------------------------------------------
   // Mode toggle
   // ---------------------------------------------------------------------------
 
@@ -426,6 +583,9 @@
       btn.setAttribute("aria-selected", btn.dataset.mode === mode ? "true" : "false");
     });
     if (persist) storageSet({ [STORAGE_KEYS.mode]: mode });
+    // Mode flip changes which axis (outer vs inner) we display and match against.
+    renderCurrent();
+    renderActiveHighlight();
   }
 
   // ---------------------------------------------------------------------------
@@ -488,12 +648,14 @@
     state.saved.push({ id: makeId(), name, w, h });
     await persistSaved();
     renderSaved();
+    renderActiveHighlight();
   }
 
   async function deleteSavedPreset(id) {
     state.saved = state.saved.filter((p) => p.id !== id);
     await persistSaved();
     renderSaved();
+    renderActiveHighlight();
   }
 
   // ---------------------------------------------------------------------------
@@ -503,6 +665,16 @@
   function openSaveModal(w, h) {
     state.pendingSave = { w, h };
     els.saveModalDesc.textContent = `${w} × ${h}`;
+
+    const match = findMatchingPreset(w, h);
+    if (match) {
+      els.saveModalNote.textContent = `Already exists: ${match}`;
+      els.saveModalNote.hidden = false;
+    } else {
+      els.saveModalNote.textContent = "";
+      els.saveModalNote.hidden = true;
+    }
+
     els.saveName.value = "";
     els.saveModal.hidden = false;
     setTimeout(() => els.saveName.focus(), 0);
@@ -588,8 +760,24 @@
       centerWindow();
     });
 
+    els.captureBtn.addEventListener("click", () => {
+      const dims = currentDimsForMode();
+      if (!dims || !Number.isFinite(dims.w) || !Number.isFinite(dims.h)) {
+        showToast("No current dimensions", { warning: true });
+        return;
+      }
+      els.customW.value = String(dims.w);
+      els.customH.value = String(dims.h);
+      setCustomError("");
+      // Scroll the custom section into view and focus the first input so the
+      // user can edit before applying or saving.
+      els.customW.focus();
+      els.customW.select();
+      els.customForm.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+
     els.infoBtn.addEventListener("click", () => {
-      showToast("FrameSnap · v0.1.0");
+      showToast("FrameSnap · v0.2.0");
     });
   }
 
@@ -606,6 +794,9 @@
     renderBuiltins();
     renderSaved();
     wire();
+    // Read live window state once so the status strip and active-preset
+    // highlight render immediately on popup open.
+    refreshCurrent();
   }
 
   document.addEventListener("DOMContentLoaded", init);
