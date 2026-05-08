@@ -136,8 +136,71 @@ body {
   pointer-events: none;
 }
 
-.segmented[data-active="viewport"] .segmented-pill {
+.segmented[data-active="viewport"] .segmented-pill,
+.segmented[data-active="framed"] .segmented-pill,
+.segmented[data-active="clipboard"] .segmented-pill {
   transform: translateX(100%);
+}
+
+/* -------- Frame controls (Raw/Framed + gradient swatches) -------- */
+
+.frame-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--space-3);
+}
+
+.frame-toggles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.segmented--inline {
+  margin: 0;
+  height: 26px;
+}
+
+.segmented--inline .segmented-option {
+  font-size: 11px;
+}
+
+.frame-swatches {
+  display: flex;
+  gap: 6px;
+  padding: 2px;
+}
+
+.frame-swatches[hidden] {
+  display: none;
+}
+
+.frame-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border-hover);
+  cursor: pointer;
+  padding: 0;
+  background-clip: padding-box;
+  transition: transform 100ms var(--ease), border-color 150ms var(--ease),
+    box-shadow 150ms var(--ease);
+  flex: 0 0 auto;
+}
+
+.frame-swatch:hover {
+  transform: scale(1.08);
+}
+
+.frame-swatch:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--accent);
+}
+
+.frame-swatch.is-active {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--accent);
 }
 
 .segmented-option {
@@ -197,6 +260,104 @@ body {
 .status-action {
   margin-left: auto;
   font-size: 11px;
+}
+
+/* -------- Search row -------- */
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 var(--space-5) var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  height: 32px;
+  padding: 0 var(--space-3);
+  transition: border-color 150ms var(--ease);
+  flex: 0 0 auto;
+}
+
+.search-row:focus-within {
+  border-color: var(--accent);
+}
+
+.search-icon {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  transition: color 150ms var(--ease);
+}
+
+.search-row:focus-within .search-icon {
+  color: var(--text);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  outline: 0;
+  padding: 0;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-input::-webkit-search-cancel-button,
+.search-input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  display: none;
+}
+
+.search-clear {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 150ms var(--ease), background 150ms var(--ease);
+}
+
+.search-clear[hidden] {
+  display: none;
+}
+
+.search-clear:hover,
+.search-clear:focus-visible {
+  color: var(--text);
+  background: var(--border-hover);
+  outline: none;
+}
+
+.preset-group[data-empty="true"] {
+  display: none;
+}
+
+.preset-card[data-hidden="true"] {
+  display: none;
+}
+
+.search-empty {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: var(--space-5) var(--space-3);
+  font-family: var(--font-mono);
+}
+
+.search-empty[hidden] {
+  display: none;
 }
 
 /* -------- Scroll content -------- */
@@ -341,10 +502,9 @@ body {
   text-overflow: ellipsis;
 }
 
-.preset-delete {
+.preset-action {
   position: absolute;
   top: 4px;
-  right: 4px;
   width: 18px;
   height: 18px;
   border: 0;
@@ -360,20 +520,50 @@ body {
     color 150ms var(--ease);
 }
 
-.preset-card:hover .preset-delete,
-.preset-delete:focus-visible {
+.preset-delete {
+  right: 4px;
+}
+
+.preset-edit {
+  right: 26px;
+}
+
+.preset-card:hover .preset-action,
+.preset-action:focus-visible {
   opacity: 1;
 }
 
-.preset-delete:hover {
+.preset-action:hover {
   background: var(--border-hover);
   color: var(--text);
 }
 
-.preset-delete:focus-visible {
+.preset-action:focus-visible {
   outline: none;
   background: var(--border-hover);
   color: var(--text);
+}
+
+/* -------- Drag and drop (saved presets) -------- */
+
+.preset-card[draggable="true"] {
+  cursor: grab;
+}
+
+.preset-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.preset-card.is-dragging {
+  opacity: 0.4;
+}
+
+.preset-card.is-drop-before {
+  box-shadow: inset 2px 0 0 0 var(--accent);
+}
+
+.preset-card.is-drop-after {
+  box-shadow: inset -2px 0 0 0 var(--accent);
 }
 
 /* -------- Custom form -------- */
@@ -517,14 +707,19 @@ body {
   font-size: 12px;
   font-weight: 500;
   height: 32px;
-  width: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-3);
+  padding: 0 var(--space-4);
   cursor: pointer;
   transition: background 150ms var(--ease), border-color 150ms var(--ease),
     transform 100ms var(--ease);
+}
+
+#center-btn {
+  width: 100%;
+  padding: 0;
 }
 
 .btn-secondary:hover {
@@ -693,4 +888,73 @@ body {
   gap: var(--space-3);
   justify-content: flex-end;
   margin-top: var(--space-2);
+}
+
+/* Edit modal reuses .custom-inputs but has no Apply button column. */
+#edit-modal .custom-inputs {
+  grid-template-columns: 1fr auto 1fr;
+}
+
+/* -------- Capture cards -------- */
+
+.capture-card {
+  /* Same layout as preset-card but the leading visual is an icon, not the
+     proportional aspect-ratio rectangle. */
+}
+
+.capture-icon {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  transition: color 150ms var(--ease), transform 150ms var(--ease);
+}
+
+.capture-card:hover .capture-icon {
+  transform: translateY(-1px);
+}
+
+.capture-card.is-busy {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.capture-card.is-busy .capture-icon {
+  animation: capture-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes capture-pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.capture-title {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* -------- Full-page capture modal -------- */
+
+.modal-hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: -0.01em;
+}
+
+.btn-primary:disabled,
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

@@ -51,6 +51,7 @@
 
     <div
       class="segmented"
+      id="mode-segmented"
       role="tablist"
       aria-label="Resize target"
     >
@@ -88,7 +89,182 @@
       </button>
     </div>
 
+    <div class="search-row">
+      <svg
+        class="search-icon"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input
+        type="search"
+        id="search-input"
+        class="search-input"
+        placeholder="Search presets"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Search presets"
+      />
+      <button
+        class="search-clear"
+        id="search-clear"
+        type="button"
+        title="Clear search"
+        aria-label="Clear search"
+        hidden
+      >
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
     <main class="content" id="content">
+      <section class="preset-group" data-group="capture">
+        <h2 class="group-label">Capture</h2>
+        <div class="frame-controls">
+          <div class="frame-toggles">
+            <div
+              class="segmented segmented--inline"
+              id="frame-segmented"
+              role="tablist"
+              aria-label="Frame style"
+            >
+              <span class="segmented-pill" aria-hidden="true"></span>
+              <button
+                class="segmented-option"
+                role="tab"
+                type="button"
+                data-frame="raw"
+                aria-selected="true"
+              >
+                Raw
+              </button>
+              <button
+                class="segmented-option"
+                role="tab"
+                type="button"
+                data-frame="framed"
+                aria-selected="false"
+              >
+                Framed
+              </button>
+            </div>
+            <div
+              class="segmented segmented--inline"
+              id="output-segmented"
+              role="tablist"
+              aria-label="Output"
+            >
+              <span class="segmented-pill" aria-hidden="true"></span>
+              <button
+                class="segmented-option"
+                role="tab"
+                type="button"
+                data-output="file"
+                aria-selected="true"
+              >
+                File
+              </button>
+              <button
+                class="segmented-option"
+                role="tab"
+                type="button"
+                data-output="clipboard"
+                aria-selected="false"
+              >
+                Clipboard
+              </button>
+            </div>
+          </div>
+          <div
+            class="frame-swatches"
+            id="frame-swatches"
+            role="radiogroup"
+            aria-label="Background gradient"
+            hidden
+          ></div>
+        </div>
+        <div class="preset-grid">
+          <button
+            class="preset-card capture-card"
+            id="capture-visible"
+            type="button"
+            data-search="capture screenshot viewable visible viewport"
+          >
+            <span class="capture-icon">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
+                <circle cx="12" cy="13" r="3"></circle>
+              </svg>
+            </span>
+            <span class="preset-text">
+              <span class="capture-title">Viewable area</span>
+              <span class="preset-label">Visible viewport</span>
+            </span>
+          </button>
+          <button
+            class="preset-card capture-card"
+            id="capture-fullpage"
+            type="button"
+            data-search="capture screenshot full page entire scroll stitch"
+          >
+            <span class="capture-icon">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </span>
+            <span class="preset-text">
+              <span class="capture-title">Full page</span>
+              <span class="preset-label">Scroll &amp; stitch</span>
+            </span>
+          </button>
+        </div>
+      </section>
+
       <section class="preset-group" data-group="landscape">
         <h2 class="group-label">Landscape · 16:9</h2>
         <div class="preset-grid" data-grid="landscape"></div>
@@ -169,6 +345,8 @@
         <h2 class="group-label">Saved</h2>
         <div class="preset-grid" data-grid="saved"></div>
       </section>
+
+      <p class="search-empty" id="search-empty" hidden>No matching presets</p>
     </main>
 
     <footer class="footer">
@@ -211,6 +389,67 @@
         <div class="modal-actions">
           <button class="btn-ghost" type="button" id="save-cancel">Cancel</button>
           <button class="btn-primary" type="button" id="save-confirm">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full-page capture progress -->
+    <div class="modal" id="capture-modal" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="capture-modal-title">
+        <h3 class="modal-title" id="capture-modal-title">Full page capture</h3>
+        <p class="modal-desc" id="capture-status">Capturing…</p>
+        <p class="modal-hint">
+          The yellow banner across the page is normal — it disappears when the capture finishes.
+        </p>
+        <div class="modal-actions">
+          <button class="btn-ghost" id="capture-cancel" type="button">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit-preset dialog -->
+    <div class="modal" id="edit-modal" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+        <h3 class="modal-title" id="edit-modal-title">Edit preset</h3>
+        <input
+          type="text"
+          id="edit-name"
+          class="modal-input"
+          placeholder="Preset name"
+          maxlength="40"
+          autocomplete="off"
+        />
+        <div class="custom-inputs">
+          <label class="dim-input">
+            <span class="dim-input-label">W</span>
+            <input
+              type="number"
+              id="edit-width"
+              inputmode="numeric"
+              min="1"
+              max="8000"
+              step="1"
+              autocomplete="off"
+            />
+          </label>
+          <span class="dim-x" aria-hidden="true">×</span>
+          <label class="dim-input">
+            <span class="dim-input-label">H</span>
+            <input
+              type="number"
+              id="edit-height"
+              inputmode="numeric"
+              min="1"
+              max="8000"
+              step="1"
+              autocomplete="off"
+            />
+          </label>
+        </div>
+        <p class="modal-note" id="edit-modal-error" hidden></p>
+        <div class="modal-actions">
+          <button class="btn-ghost" type="button" id="edit-cancel">Cancel</button>
+          <button class="btn-primary" type="button" id="edit-confirm">Save</button>
         </div>
       </div>
     </div>

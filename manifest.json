@@ -1,14 +1,16 @@
 {
   "manifest_version": 3,
   "name": "FrameSnap",
-  "version": "0.2.0",
+  "version": "0.6.1",
   "description": "Resize the browser window to preset dimensions for web testing and video recording.",
   "permissions": [
     "windows",
     "storage",
     "system.display",
     "scripting",
-    "activeTab"
+    "activeTab",
+    "debugger",
+    "clipboardWrite"
   ],
   "action": {
     "default_title": "FrameSnap",
